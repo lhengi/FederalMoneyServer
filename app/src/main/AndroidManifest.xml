@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.lhengi.federalmoneyserver">
 
+    <permission android:name="com.example.lhengi.federalmoneyserver"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,6 +18,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name=".FederalMoneyServerImpl"
+            android:label="FederalMoneyServerClient"
+            android:exported="true"
+            android:permission="com.example.lhengi.federalmoneyserver">
+
+            <intent-filter>
+                <action android:name="come.example.lhengi.federalmoneyserver.FederalMoneyServer" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
