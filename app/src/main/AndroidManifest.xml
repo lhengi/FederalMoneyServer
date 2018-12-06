@@ -3,6 +3,8 @@
     package="com.example.lhengi.federalmoneyserver">
 
     <permission android:name="com.example.lhengi.federalmoneyserver"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
 
     <application
         android:allowBackup="true"

@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.example.lhengi.federalmoneyserver.*;
 
+import org.json.JSONArray;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,8 +39,8 @@ public class FederalMoneyServerImpl extends Service {
         {
 
             System.out.println("$$$$$$$$$$$$$$$$$");
-            String query = "SELECT * FROM t1";
-
+            String query = "SELECT open_today FROM t1 WHERE year = "+aYear+" AND month = 1";
+            System.out.println(query);
             String urlQuery = initialURL+ URLEncoder.encode(query);
             System.out.println(urlQuery);
             String data = "";
@@ -55,7 +57,7 @@ public class FederalMoneyServerImpl extends Service {
                     httpURLConnection.disconnect();
             }
 
-            System.out.println("Data is comming**********\n\n\n"+data+"&&&&&\n\n\n");
+            System.out.println("Data is coming**********\n\n\n"+data+"&&&&&\n\n\n");
 
 
 
@@ -81,7 +83,6 @@ public class FederalMoneyServerImpl extends Service {
             reader = new BufferedReader(new InputStreamReader(in));
             String line = "";
             while ((line = reader.readLine()) != null) {
-                System.out.println("**"+line);
                 data.append(line);
             }
         } catch (IOException e) {
@@ -95,6 +96,8 @@ public class FederalMoneyServerImpl extends Service {
                 }
             }
         }
+
+
         return data.toString();
     }
 
