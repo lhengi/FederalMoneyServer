@@ -35,14 +35,43 @@ public class FederalMoneyServerImpl extends Service {
     protected static final String TAG = "FederalMoneyServer";
 
     private static final String initialURL = "http://api.treasury.io/cc7znvq/47d80ae900e04f2/sql/?q=";
+    public static int serviceStatus = 0;
+    public static int numBound = 0;
+
+    public void onCreate()
+    {
+        super.onCreate();
+        serviceStatus = 1;
+    }
+
+    public void onDestroy()
+    {
+        serviceStatus = 5;
+        super.onDestroy();
+    }
+
+    public void onStart(Intent intent, int startId)
+    {
+        super.onStart(intent,startId);
+        serviceStatus = 2;
+    }
+
+    public int onStartCommand(Intent intent, int flag, int startId)
+    {
+        serviceStatus = 2;
+        return super.onStartCommand(intent,flag,startId);
+
+    }
 
 
 
 
     private final FederalMoneyServer.Stub mBinder = new FederalMoneyServer.Stub() {
 
+
         public int[] monthlyAvgCash(int aYear)
         {
+            //System.out.println("&&&&&& Montly AVG Cash called!!!");
             int[] returnArr = new int[12];
             for(int i = 0; i < 12; i++) {
                 String query = "SELECT open_today FROM t1 WHERE year = " + aYear + " AND month = "+(i+1);
@@ -93,7 +122,9 @@ public class FederalMoneyServerImpl extends Service {
             String monthStartStr = (aMonth < 10)?"0"+(aMonth):""+(aMonth);
             String dayStartStr = (aDay < 10)?"0"+aDay:""+aDay;
             boolean startSet = false;
+            String[] selectedDates = new String[aNumber];
             //System.out.print(cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DAY_OF_MONTH)+"--WeekDay: "+cal.get(Calendar.DAY_OF_WEEK));
+            /*
             if(cal.get(Calendar.DAY_OF_WEEK)<=6 && cal.get(Calendar.DAY_OF_WEEK) > 1) // sun is 0
             {
                 System.out.println("SETTTTTTTTTTTTTTT");
@@ -102,35 +133,49 @@ public class FederalMoneyServerImpl extends Service {
                 startYear = cal.get(Calendar.YEAR);
                 monthStartStr = (curMonth < 10)?"0"+curMonth:""+curMonth;
                 dayStartStr = (curDay < 10)?"0"+curDay:""+curDay;
+                selectedDates[]
                 startSet = true;
                 iNum--;
-            }
+            }*/
 
-            for(int i = 0; i < iNum;)
+            for(int i = 0; i < aNumber;)
             {
-                cal.add(Calendar.DAY_OF_MONTH, 1);
+                int curMonth = cal.get(Calendar.MONTH)+1;
+                int curDay = cal.get(Calendar.DAY_OF_MONTH);
+                int curYear = cal.get(Calendar.YEAR);
+                String currentmonthStr = (curMonth < 10)?"0"+curMonth:""+curMonth;
+                String currentdayStr = (curDay < 10)?"0"+curDay:""+curDay;
+
                 System.out.print(cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DAY_OF_MONTH));
 
                 if(cal.get(Calendar.DAY_OF_WEEK)<=6 && cal.get(Calendar.DAY_OF_WEEK) > 1)
                 {
                     if (!startSet)
                     {
-                        int curMonth = cal.get(Calendar.MONTH)+1;
-                        int curDay = cal.get(Calendar.DAY_OF_MONTH);
-                        startYear = cal.get(Calendar.YEAR);
-                        monthStartStr = (curMonth < 10)?"0"+curMonth:""+curMonth;
-                        dayStartStr = (curDay < 10)?"0"+curDay:""+curDay;
+                        startYear = curYear;
+                        monthStartStr = currentmonthStr;
+                        dayStartStr = currentdayStr;
+
                         startSet = true;
                     }
                     System.out.println(" Yes");
+                    selectedDates[i] = ""+curYear+"-"+currentmonthStr+"-"+currentdayStr;
                     i++;
                 }
                 else
                 {
                     System.out.println();
                 }
+
+                cal.add(Calendar.DAY_OF_MONTH, 1);
             }
 
+            System.out.println("\n\nSelected days");
+            for(int i = 0; i < selectedDates.length;i++)
+            {
+                System.out.println(selectedDates[i]);
+            }
+            System.out.println("\n\nSelected days End");
             int endMonth = cal.get(Calendar.MONTH)+1;
             int endDay = cal.get(Calendar.DAY_OF_MONTH);
             String monthEndStr = ( endMonth < 10 )?"0"+endMonth:""+endMonth;
@@ -166,7 +211,7 @@ String query = "SELECT  \"date\", \"weekday\", \"account\", \"open_today\" FROM 
                     httpURLConnection.disconnect();
             }
 
-            returnArr = parseDaily(data,aNumber);
+            returnArr = parseDaily(data,aNumber,selectedDates);
 
 
             return returnArr;
@@ -174,7 +219,7 @@ String query = "SELECT  \"date\", \"weekday\", \"account\", \"open_today\" FROM 
 
     };
 
-    private int[] parseDaily(String data, int number)
+    private int[] parseDaily(String data, int number,String[] expectDate)
     {
         //System.out.println(data);
         int[] returnArr = new int[number];
@@ -217,11 +262,24 @@ String query = "SELECT  \"date\", \"weekday\", \"account\", \"open_today\" FROM 
         Arrays.sort(keyArr);
 
         System.out.println("Key length: "+keyArr.length +"  Number: "+number);
-        for(int i = 0; i < keyArr.length;i++)
+        for(int i = 0; i < expectDate.length; i++)
         {
-            System.out.println(keyArr[i]);
-            returnArr[i] = hashMap.get(keyArr[i]);
+            if(hashMap.containsKey(expectDate[i]))
+            {
+                System.out.println(expectDate[i]+"  Money = "+hashMap.get(expectDate[i]));
+                returnArr[i] = hashMap.get(expectDate[i]);
+            }
+            else
+            {
+                System.out.println(expectDate[i]+" Doesn't exisit");
+            }
         }
+        /*
+        for(int i = 0; i < keyArr.length;i++)// some day are missing
+        {
+            System.out.println(keyArr[i]+"  Money = "+hashMap.get(keyArr[i]));
+            returnArr[i] = hashMap.get(keyArr[i]);
+        }*/
 
 
 
@@ -282,8 +340,16 @@ String query = "SELECT  \"date\", \"weekday\", \"account\", \"open_today\" FROM 
 
     @Override
     public IBinder onBind(Intent intent) {
+        serviceStatus = 3;
+        numBound++;
         System.out.println("&&&&&&&&&&&&&&&&&& Binding !!!!!!!!!!!!!!!!!1");
         return mBinder;
+    }
+
+    public boolean onUnbind(Intent intent)
+    {
+        numBound--;
+        return super.onUnbind(intent);
     }
 }
 
